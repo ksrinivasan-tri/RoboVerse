@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # Policy Server - GPU-accelerated inference
+  policy-server:
+    build:
+      context: ../../
+      dockerfile: roboverse_grpc/docker/policy.Dockerfile
+    container_name: roboverse_policy_server
+    ports:
+      - "50051:50051"
+    volumes:
+      - ../models:/workspace/models:ro  # Mount pre-trained models
+      - ../logs:/workspace/logs  # Mount logs directory
+      - ../data:/workspace/data:ro  # Mount data directory
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - GRPC_SERVER_PORT=50051
+      - GRPC_SERVER_HOST=0.0.0.0
+      - POLICY_TYPE=${POLICY_TYPE:-diffusion}  # diffusion, vla, isaaclab
+      - MODEL_PATH=${MODEL_PATH:-/workspace/models/default_policy.pth}
+      - BATCH_SIZE=${BATCH_SIZE:-16}
+      - DEVICE=${DEVICE:-cuda}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import grpc; from roboverse_grpc.proto import RobosuitePolicy_pb2, RobosuitePolicy_pb2_grpc; channel = grpc.insecure_channel('localhost:50051'); stub = RobosuitePolicy_pb2_grpc.HealthStub(channel); stub.Check(RobosuitePolicy_pb2.HealthCheckRequest())"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # RoboVerse Environment - multiple instances
+  roboverse-env-1:
+    build:
+      context: ../../
+      dockerfile: roboverse_grpc/docker/roboverse.Dockerfile
+    container_name: roboverse_env_1
+    depends_on:
+      policy-server:
+        condition: service_healthy
+    volumes:
+      - ../data:/workspace/data  # Mount data directory
+      - ../logs:/workspace/logs  # Mount logs directory
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # X11 forwarding for rendering
+    environment:
+      - DISPLAY=${DISPLAY}
+      - POLICY_SERVER_URI=policy-server:50051
+      - ENV_ID=0
+      - TASK_NAME=${TASK_NAME:-square_d0}
+      - NUM_ENVS=${NUM_ENVS:-4}
+      - SIM=${SIM:-isaaclab}
+    command: ["python", "examples/run_robosuite_task.py", "--task", "${TASK_NAME:-square_d0}", "--num-envs", "${NUM_ENVS:-4}", "--policy-server", "policy-server:50051"]
+    restart: unless-stopped
+
+  roboverse-env-2:
+    build:
+      context: ../../
+      dockerfile: roboverse_grpc/docker/roboverse.Dockerfile
+    container_name: roboverse_env_2
+    depends_on:
+      policy-server:
+        condition: service_healthy
+    volumes:
+      - ../data:/workspace/data
+      - ../logs:/workspace/logs
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - DISPLAY=${DISPLAY}
+      - POLICY_SERVER_URI=policy-server:50051
+      - ENV_ID=1
+      - TASK_NAME=${TASK_NAME:-square_d0}
+      - NUM_ENVS=${NUM_ENVS:-4}
+      - SIM=${SIM:-isaaclab}
+    command: ["python", "examples/run_robosuite_task.py", "--task", "${TASK_NAME:-square_d0}", "--num-envs", "${NUM_ENVS:-4}", "--policy-server", "policy-server:50051"]
+    restart: unless-stopped
+    profiles:
+      - multi-env  # Only start with --profile multi-env
+
+  # Monitoring and debugging services
+  grpc-ui:
+    image: fullstorydev/grpcui:latest
+    container_name: grpc_ui
+    ports:
+      - "8080:8080"
+    depends_on:
+      - policy-server
+    command: ["-plaintext", "-bind", "0.0.0.0", "-port", "8080", "policy-server:50051"]
+    profiles:
+      - debug  # Only start with --profile debug
+
+  # Log aggregation
+  fluentd:
+    image: fluentd:latest
+    container_name: log_aggregator
+    ports:
+      - "24224:24224"
+    volumes:
+      - ../logs:/fluentd/log
+    profiles:
+      - logging  # Only start with --profile logging
+
+# Networks
+networks:
+  default:
+    driver: bridge
+
+# Volumes for persistent data
+volumes:
+  models:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../models
+
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../data
+
+  logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../logs

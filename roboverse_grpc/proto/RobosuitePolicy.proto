@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package roboverse_policy_interface;
+
+// Time message for timestamps
+message Time {
+  int32 sec = 1;
+  uint32 nanosec = 2;
+}
+
+// Header with timestamp
+message Header {
+  Time stamp = 1;
+}
+
+// Tensor data for observations and states
+message Tensor {
+  repeated int32 shape = 1;
+  repeated float data = 2;
+  string dtype = 3;
+}
+
+// RGB/Depth/Segmentation image data
+message CameraData {
+  string camera_name = 1;
+  Tensor rgb = 2;
+  Tensor depth = 3;
+  Tensor segmentation = 4;
+  // Camera intrinsics and pose
+  Tensor intrinsics = 5;
+  Tensor pose = 6;
+}
+
+// Robot state containing joint positions, velocities, etc.
+message RobotState {
+  string robot_name = 1;
+  // Joint information
+  map<string, float> dof_pos = 2;
+  map<string, float> dof_vel = 3;
+  map<string, float> dof_torque = 4;
+  map<string, float> dof_pos_target = 5;
+  map<string, float> dof_vel_target = 6;
+  map<string, float> dof_effort_target = 7;
+  // End-effector pose
+  Tensor pos = 8;
+  Tensor rot = 9;
+  Tensor vel = 10;
+  Tensor ang_vel = 11;
+  // Center of mass
+  Tensor com = 12;
+  Tensor com_vel = 13;
+}
+
+// Object state containing position, rotation, etc.
+message ObjectState {
+  string object_name = 1;
+  Tensor pos = 2;
+  Tensor rot = 3;
+  Tensor vel = 4;
+  Tensor ang_vel = 5;
+  // Joint information for articulated objects
+  map<string, float> dof_pos = 6;
+  map<string, float> dof_vel = 7;
+  // Center of mass
+  Tensor com = 8;
+  Tensor com_vel = 9;
+}
+
+// Environment state containing all robots, objects, and camera data
+message RobosuiteObservation {
+  // Robots in the environment
+  repeated RobotState robots = 1;
+  // Objects in the environment
+  repeated ObjectState objects = 2;
+  // Camera observations
+  repeated CameraData cameras = 3;
+  // Timestamp
+  Header header = 4;
+  // Environment ID for multi-environment setups
+  int32 env_id = 5;
+  // Additional metadata
+  map<string, string> metadata = 6;
+}
+
+// Action to be executed by robots
+message RobotAction {
+  string robot_name = 1;
+  map<string, float> dof_pos_target = 2;
+  map<string, float> dof_effort_target = 3;
+  map<string, float> dof_vel_target = 4;
+}
+
+// Complete action for the environment
+message RobosuiteAction {
+  repeated RobotAction robot_actions = 1;
+  Header header = 2;
+  int32 env_id = 3;
+}
+
+// Policy step request from client to server
+message RobosuitePolicyStepRequest {
+  string client_identifier = 1;
+  RobosuiteObservation observation = 2;
+}
+
+// Policy step response from server to client
+message RobosuitePolicyStepResponse {
+  bool success = 1;
+  RobosuiteAction action = 2;
+  string error_message = 3;
+}
+
+// Policy reset request
+message RobosuitePolicyResetRequest {
+  string client_identifier = 1;
+  optional int32 seed = 2;
+  int32 env_id = 3;
+}
+
+// Policy reset response
+message RobosuitePolicyResetResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// Policy metadata
+message PolicyMetadata {
+  string policy_type = 1;
+  string model_name = 2;
+  string version = 3;
+  map<string, string> config = 4;
+  repeated string supported_robots = 5;
+  repeated string supported_tasks = 6;
+}
+
+// Get policy metadata request
+message GetPolicyMetadataRequest {
+  string client_identifier = 1;
+}
+
+// Get policy metadata response
+message GetPolicyMetadataResponse {
+  bool success = 1;
+  PolicyMetadata policy_metadata = 2;
+  string error_message = 3;
+}
+
+// Health check messages (standard gRPC health checking)
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}
+
+// gRPC Service definitions
+service RobosuitePolicyStepService {
+  rpc PolicyStep(RobosuitePolicyStepRequest) returns (RobosuitePolicyStepResponse);
+}
+
+service RobosuitePolicyResetService {
+  rpc PolicyReset(RobosuitePolicyResetRequest) returns (RobosuitePolicyResetResponse);
+}
+
+service RobosuiteGetPolicyMetadataService {
+  rpc GetPolicyMetadata(GetPolicyMetadataRequest) returns (GetPolicyMetadataResponse);
+}
+
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
