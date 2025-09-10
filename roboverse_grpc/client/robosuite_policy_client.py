@@ -175,7 +175,7 @@ class RobosuitePolicyClient:
 
         return action
 
-    def step_batch(self, observations: List[EnvState], env_ids: Optional[List[int]] = None) -> List[Action]:
+    def step_batch(self, observations: List[DictEnvState], env_ids: Optional[List[int]] = None) -> List[Action]:
         """Get actions for a batch of observations.
 
         Args:
