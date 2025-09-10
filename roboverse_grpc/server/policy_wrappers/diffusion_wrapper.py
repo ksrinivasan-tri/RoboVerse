@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 import torch
 
-from metasim.types import Action, EnvState
+from metasim.types import Action, DictEnvState
 
 from .base_wrapper import SingleInstancePolicyWrapper
 
@@ -27,7 +27,7 @@ class DiffusionPolicyWrapper(SingleInstancePolicyWrapper):
         if hasattr(self.policy, "eval"):
             self.policy.eval()
 
-    def _step_single(self, observation: EnvState) -> Action:
+    def _step_single(self, observation: DictEnvState) -> Action:
         """Process single observation through diffusion policy.
 
         Args:
@@ -54,7 +54,7 @@ class DiffusionPolicyWrapper(SingleInstancePolicyWrapper):
             # Convert actions back to RoboVerse format
             return self._convert_action(actions, observation)
 
-    def _convert_observation(self, observation: EnvState) -> Dict[str, torch.Tensor]:
+    def _convert_observation(self, observation: DictEnvState) -> Dict[str, torch.Tensor]:
         """Convert RoboVerse observation to diffusion policy format.
 
         Args:
@@ -102,7 +102,7 @@ class DiffusionPolicyWrapper(SingleInstancePolicyWrapper):
 
         return obs_dict
 
-    def _convert_action(self, actions: torch.Tensor, observation: EnvState) -> Action:
+    def _convert_action(self, actions: torch.Tensor, observation: DictEnvState) -> Action:
         """Convert diffusion policy action to RoboVerse format.
 
         Args:

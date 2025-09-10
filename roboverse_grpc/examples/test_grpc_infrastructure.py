@@ -9,7 +9,7 @@ from typing import Dict
 import torch
 from loguru import logger as log
 
-from metasim.types import Action, EnvState, ObjectState, RobotState
+from metasim.types import Action, DictEnvState, ObjectState, RobotState
 from roboverse_grpc.client.robosuite_policy_client import (
     RobosuitePolicyClientConfig,
 )
@@ -20,7 +20,7 @@ from roboverse_grpc.server.robosuite_policy_server import ServerConfig, run_serv
 class MockPolicyWrapper(StatelessPolicyWrapper):
     """Mock policy wrapper for testing."""
 
-    def step_batch(self, observations: Dict[uuid.UUID, EnvState]) -> Dict[uuid.UUID, Action]:
+    def step_batch(self, observations: Dict[uuid.UUID, DictEnvState]) -> Dict[uuid.UUID, Action]:
         """Generate mock actions for all observations."""
         actions = {}
         for client_id, obs in observations.items():
@@ -50,7 +50,7 @@ class MockPolicyWrapper(StatelessPolicyWrapper):
         }
 
 
-def create_mock_env_state(env_id: int = 0) -> EnvState:
+def create_mock_env_state(env_id: int = 0) -> DictEnvState:
     """Create a mock environment state for testing."""
     # Mock robot state
     robot_state: RobotState = {
@@ -104,7 +104,7 @@ def create_mock_env_state(env_id: int = 0) -> EnvState:
         "pose": torch.eye(4)[:3, :],  # 3x4 transformation matrix
     }
 
-    env_state: EnvState = {
+    env_state: DictEnvState = {
         "robots": {"franka": robot_state},
         "objects": {"cube": object_state},
         "cameras": {"front_camera": camera_data},

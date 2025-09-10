@@ -5,7 +5,7 @@ import uuid
 
 import torch
 
-from metasim.types import Action, EnvState, ObjectState, RobotState
+from metasim.types import Action, DictEnvState, ObjectState, RobotState
 from roboverse_grpc.conversions.robosuite_policy_conversions import (
     action_to_grpc_msg,
     env_state_to_grpc_msg,
@@ -61,7 +61,7 @@ class TestTensorConversions(unittest.TestCase):
 class TestStateConversions(unittest.TestCase):
     """Test state conversion functions."""
 
-    def create_sample_env_state(self) -> EnvState:
+    def create_sample_env_state(self) -> DictEnvState:
         """Create a sample environment state for testing."""
         robot_state: RobotState = {
             "pos": torch.tensor([0.5, 0.0, 0.3]),
@@ -96,7 +96,7 @@ class TestStateConversions(unittest.TestCase):
             "pose": torch.tensor([1.0, 0.0, 0.0, 0.5, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0]).reshape(3, 4),
         }
 
-        env_state: EnvState = {
+        env_state: DictEnvState = {
             "robots": {"franka": robot_state},
             "objects": {"cube": object_state},
             "cameras": {"front_cam": camera_data},
@@ -212,7 +212,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_empty_env_state(self):
         """Test conversion of empty environment state."""
-        empty_env_state: EnvState = {"robots": {}, "objects": {}, "cameras": {}}
+        empty_env_state: DictEnvState = {"robots": {}, "objects": {}, "cameras": {}}
 
         grpc_obs = env_state_to_grpc_msg(empty_env_state)
         converted_env_state, env_id = grpc_msg_to_env_state(grpc_obs)
@@ -246,7 +246,7 @@ class TestEdgeCases(unittest.TestCase):
             "dof_torque": None,
         }
 
-        env_state: EnvState = {"robots": {"test_robot": partial_robot_state}, "objects": {}, "cameras": {}}
+        env_state: DictEnvState = {"robots": {"test_robot": partial_robot_state}, "objects": {}, "cameras": {}}
 
         grpc_obs = env_state_to_grpc_msg(env_state)
         converted_env_state, env_id = grpc_msg_to_env_state(grpc_obs)

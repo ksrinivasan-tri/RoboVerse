@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import grpc
 from loguru import logger as log
 
-from metasim.types import Action, EnvState
+from metasim.types import Action, DictEnvState
 from roboverse_grpc.conversions.robosuite_policy_conversions import (
     env_state_to_grpc_msg,
     grpc_msg_to_action,
@@ -45,7 +45,7 @@ class RobosuitePolicyClientConfig:
 class RobosuitePolicyClient:
     """A policy client that communicates with a gRPC policy server for RoboVerse environments.
 
-    This client converts RoboVerse EnvState observations into gRPC messages,
+    This client converts RoboVerse DictEnvState observations into gRPC messages,
     sends them to a remote policy server, and converts the received actions
     back into RoboVerse Action format.
     """
@@ -140,7 +140,7 @@ class RobosuitePolicyClient:
         self._success_or_throw(response, "reset")
         log.debug(f"Successfully reset policy for environment {env_id}")
 
-    def step(self, observation: EnvState, env_id: int = 0) -> Action:
+    def step(self, observation: DictEnvState, env_id: int = 0) -> Action:
         """Get action from policy given an observation.
 
         Args:
@@ -223,11 +223,11 @@ class RoboVersePolicyWrapper:
         self.client = client
         self._metadata = None
 
-    def __call__(self, observation: EnvState) -> Action:
+    def __call__(self, observation: DictEnvState) -> Action:
         """Make the wrapper callable like a policy function."""
         return self.client.step(observation)
 
-    def step(self, observation: EnvState) -> Action:
+    def step(self, observation: DictEnvState) -> Action:
         """Step method for policy interface compatibility."""
         return self.client.step(observation)
 

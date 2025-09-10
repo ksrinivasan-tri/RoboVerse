@@ -8,7 +8,7 @@ import time
 import torch
 from loguru import logger as log
 
-from metasim.types import Action, EnvState
+from metasim.types import Action, DictEnvState
 from roboverse_grpc.client.robosuite_policy_client import (
     RobosuitePolicyClientConfig,
 )
@@ -89,7 +89,7 @@ class MockEnvironment:
             "pose": torch.eye(4)[:3, :],
         }
 
-    def get_observation(self) -> EnvState:
+    def get_observation(self) -> DictEnvState:
         """Get current environment observation."""
         robot_state = {
             "pos": torch.tensor([0.4, 0.0, 0.4]),

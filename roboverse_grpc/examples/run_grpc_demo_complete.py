@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from loguru import logger as log
 
-from metasim.types import EnvState, ObjectState, RobotState
+from metasim.types import DictEnvState, ObjectState, RobotState
 from roboverse_grpc.client.robosuite_policy_client import (
     RobosuitePolicyClientConfig,
 )
@@ -106,7 +106,7 @@ class DemoEnvironment:
                 "pose": torch.eye(4)[:3, :],
             }
 
-            env_state: EnvState = {
+            env_state: DictEnvState = {
                 "robots": {self.robot_name: robot_state},
                 "objects": {"target_cube": object_state},
                 "cameras": {"front_camera": camera_data},

@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from metasim.types import Action, EnvState
+from metasim.types import Action, DictEnvState
 
 from .base_wrapper import SingleInstancePolicyWrapper
 
@@ -42,7 +42,7 @@ class VLAPolicyWrapper(SingleInstancePolicyWrapper):
         if hasattr(self.policy, "eval"):
             self.policy.eval()
 
-    def _step_single(self, observation: EnvState) -> Action:
+    def _step_single(self, observation: DictEnvState) -> Action:
         """Process single observation through VLA policy.
 
         Args:
@@ -69,7 +69,7 @@ class VLAPolicyWrapper(SingleInstancePolicyWrapper):
             # Convert actions back to RoboVerse format
             return self._convert_action(actions, observation)
 
-    def _convert_observation(self, observation: EnvState) -> Dict[str, Any]:
+    def _convert_observation(self, observation: DictEnvState) -> Dict[str, Any]:
         """Convert RoboVerse observation to VLA policy format.
 
         Args:
@@ -155,7 +155,7 @@ class VLAPolicyWrapper(SingleInstancePolicyWrapper):
 
         return vla_obs
 
-    def _convert_action(self, actions: Any, observation: EnvState) -> Action:
+    def _convert_action(self, actions: Any, observation: DictEnvState) -> Action:
         """Convert VLA policy action to RoboVerse format.
 
         Args:

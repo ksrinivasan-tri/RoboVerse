@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import torch
 
-from metasim.types import Action, EnvState, ObjectState, RobotState
+from metasim.types import Action, DictEnvState, ObjectState, RobotState
 from roboverse_grpc.proto import RobosuitePolicy_pb2
 
 
@@ -146,7 +146,7 @@ def grpc_msg_to_camera_data(grpc_camera: RobosuitePolicy_pb2.CameraData) -> tupl
     return grpc_camera.camera_name, camera_data
 
 
-def env_state_to_grpc_msg(env_state: EnvState, env_id: int = 0) -> RobosuitePolicy_pb2.RobosuiteObservation:
+def env_state_to_grpc_msg(env_state: DictEnvState, env_id: int = 0) -> RobosuitePolicy_pb2.RobosuiteObservation:
     """Convert RoboVerse EnvState to gRPC RobosuiteObservation message."""
     # Convert robots
     robot_msgs = []
@@ -173,7 +173,7 @@ def env_state_to_grpc_msg(env_state: EnvState, env_id: int = 0) -> RobosuitePoli
     )
 
 
-def grpc_msg_to_env_state(grpc_obs: RobosuitePolicy_pb2.RobosuiteObservation) -> tuple[EnvState, int]:
+def grpc_msg_to_env_state(grpc_obs: RobosuitePolicy_pb2.RobosuiteObservation) -> tuple[DictEnvState, int]:
     """Convert gRPC RobosuiteObservation message to RoboVerse EnvState."""
     # Convert robots
     robots = {}
@@ -193,7 +193,7 @@ def grpc_msg_to_env_state(grpc_obs: RobosuitePolicy_pb2.RobosuiteObservation) ->
         camera_name, camera_data = grpc_msg_to_camera_data(camera_msg)
         cameras[camera_name] = camera_data
 
-    env_state: EnvState = {"robots": robots, "objects": objects, "cameras": cameras}
+    env_state: DictEnvState = {"robots": robots, "objects": objects, "cameras": cameras}
 
     return env_state, grpc_obs.env_id
 

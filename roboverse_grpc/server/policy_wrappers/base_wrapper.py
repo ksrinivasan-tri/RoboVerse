@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from metasim.types import Action, EnvState
+from metasim.types import Action, DictEnvState
 
 
 class PolicyWrapper(ABC):
@@ -15,7 +15,7 @@ class PolicyWrapper(ABC):
     """
 
     @abstractmethod
-    def step_batch(self, observations: Dict[UUID, EnvState]) -> Dict[UUID, Action]:
+    def step_batch(self, observations: Dict[UUID, DictEnvState]) -> Dict[UUID, Action]:
         """Process a batch of observations and return corresponding actions.
 
         Args:
@@ -72,7 +72,7 @@ class SingleInstancePolicyWrapper(PolicyWrapper):
         """
         self.policy = policy_instance
 
-    def step_batch(self, observations: Dict[UUID, EnvState]) -> Dict[UUID, Action]:
+    def step_batch(self, observations: Dict[UUID, DictEnvState]) -> Dict[UUID, Action]:
         """Process observations one by one using the single policy instance.
 
         This is a simple implementation that processes each observation individually.
@@ -91,7 +91,7 @@ class SingleInstancePolicyWrapper(PolicyWrapper):
         return actions
 
     @abstractmethod
-    def _step_single(self, observation: EnvState) -> Action:
+    def _step_single(self, observation: DictEnvState) -> Action:
         """Process a single observation.
 
         Args:
@@ -129,7 +129,7 @@ class MultiInstancePolicyWrapper(PolicyWrapper):
         """Initialize with empty client policy mapping."""
         self.client_policies: Dict[UUID, Any] = {}
 
-    def step_batch(self, observations: Dict[UUID, EnvState]) -> Dict[UUID, Action]:
+    def step_batch(self, observations: Dict[UUID, DictEnvState]) -> Dict[UUID, Action]:
         """Process observations using client-specific policy instances."""
         actions = {}
         for client_id, observation in observations.items():
@@ -159,7 +159,7 @@ class MultiInstancePolicyWrapper(PolicyWrapper):
         pass
 
     @abstractmethod
-    def _step_single_with_policy(self, policy: Any, observation: EnvState) -> Action:
+    def _step_single_with_policy(self, policy: Any, observation: DictEnvState) -> Action:
         """Process a single observation with a specific policy instance.
 
         Args:
