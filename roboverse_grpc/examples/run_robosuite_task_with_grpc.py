@@ -6,7 +6,7 @@ import time
 import gymnasium as gym
 from loguru import logger as log
 
-from metasim.utils.setup_util import register_task
+from metasim.task.registry import register_task
 from roboverse_grpc.client.robosuite_policy_client import (
     RobosuitePolicyClientConfig,
 )
